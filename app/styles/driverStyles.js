@@ -1,56 +1,6 @@
 import { StyleSheet, Dimensions } from "react-native";
 
 const style = StyleSheet.create({
-    modal: {
-        alignItems: "center",
-    },
-    container: {
-        backgroundColor: "rgba(0, 54, 58, 0.8)",
-        width: "80%",
-        alignItems: "center",
-        paddingVertical: 12,
-        borderRadius: 10
-    },
-    textInput: {
-        borderBottomWidth: 1,
-        width: "65%",
-        textAlign: "center",
-        backgroundColor: "#ccc",
-        borderTopLeftRadius: 20,
-        borderBottomLeftRadius: 20,
-        borderWidth: 1,
-        borderColor: "#ff6600",
-    },
-    note: {
-        textAlign: "center",
-        marginBottom: 5,
-        fontSize: 18,
-        marginHorizontal: 5,
-        color: "#fff"
-    },
-    notes: {
-        textAlign: "center",
-        marginBottom: 5,
-        marginHorizontal: 5,
-        color: "#ccc"
-    },
-    button: {
-        backgroundColor: "#ff6600",
-        borderRadius: 15,
-        marginTop: 30,
-        paddingVertical: 10,
-        paddingHorizontal: 20
-    },
-    send: {
-        backgroundColor: "#ccc", 
-        justifyContent: "center",
-        borderTopRightRadius: 20,
-        borderBottomRightRadius: 20,
-        width: 40,
-        alignItems: "center",
-        borderColor: "#ff6600",
-        borderWidth: 1,
-    },
     map: {
         flex: 1,
         width: Dimensions.get("window").width,
@@ -68,7 +18,7 @@ const style = StyleSheet.create({
       resizeMode: "contain"
     },
     tabsContainer: {
-        flex: 0.5,
+        flex: 0.7,
         // marginBottom: 10,
         backgroundColor: 'rgba(0, 54, 58, 0.8)',
       },
@@ -80,7 +30,7 @@ const style = StyleSheet.create({
           flexDirection: "row",
           justifyContent: "space-evenly",
           borderBottomWidth: 1,
-          borderColor: "#ff6600",
+          borderColor: 'rgba(0, 54, 58, 0.8)'
       },
       togle: {
           marginVertical: 15,

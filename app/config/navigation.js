@@ -8,6 +8,7 @@ import Signup from "../content/Signup";
 import Splash from "../content/splash";
 import {DrawerFile} from "../content/drawer";
 import Settings from "../content/settings";
+import AuthDriver from "../content/AuthDriver";
 import Drivers from "../content/drivers";
 
 const Stack = createStackNavigator();
@@ -25,7 +26,7 @@ function DrawerRoutes() {
       }}>
       <DrawerScreen.Screen name="HomeScreen" component={HomeScreen} />
       <DrawerScreen.Screen name="Settings" component={Settings} />
-      <DrawerScreen.Screen name="Drivers" component={Drivers} />
+      <DrawerScreen.Screen name="AuthDriver" component={AuthDriver} />
 
     </DrawerScreen.Navigator>
   );
@@ -38,6 +39,7 @@ function Navigation() {
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="HomeScreen" component={DrawerRoutes} />
+        <Stack.Screen name="Drivers" component={Drivers} />
       </Stack.Navigator>
     </NavigationContainer>
   );

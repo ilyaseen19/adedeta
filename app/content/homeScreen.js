@@ -129,6 +129,24 @@ class HomeScreen extends Component<Props, State> {
             priceRange = "GH₵ 9 - 10";
         } else if(6.5 < distance && distance <= 7.5){
             priceRange = "GH₵ 10 - 11";
+        } else if(7.5 < distance && distance <= 8.5){
+            priceRange = "GH₵ 11 - 12";
+        } else if(8.5 < distance && distance <= 9.5){
+            priceRange = "GH₵ 12 - 15";
+        } else if(9.5 < distance && distance <= 10){
+            priceRange = "GH₵ 15 - 18";
+        } else if(10 < distance && distance <= 11){
+            priceRange = "GH₵ 18 - 20";
+        } else if(11 < distance && distance <= 12){
+            priceRange = "GH₵ 20 - 25";
+        } else if(12 < distance && distance <= 13){
+            priceRange = "GH₵ 25 - 30";
+        } else if(13 < distance && distance <= 14){
+            priceRange = "GH₵ 30 - 35";
+        } else if(14 < distance && distance <= 15){
+            priceRange = "GH₵ 35 - 40";
+        } else if(15 < distance && distance <= 16){
+            priceRange = "GH₵ 40 - 47";
         }
         return priceRange;
     }

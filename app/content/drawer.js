@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { Drawer, Avatar, Portal, Modal } from 'react-native-paper';
 import Settings from "./settings";
-import Drivers from "./drivers";
+import AuthDriver from "./AuthDriver";
 
 const userData = "";
 
@@ -51,7 +51,7 @@ export function DrawerFile(props) {
                             icon={({color, size}) => (
                                 <Image source={require("../images/driver.png")} style={{width: 40, height: 40}} />
                             )}
-                            onPress={()=>{props.navigation.navigate(Drivers)}}
+                            onPress={()=>{props.navigation.navigate(AuthDriver)}}
                         />
                         <DrawerItem
                             icon={({color, size}) => (
