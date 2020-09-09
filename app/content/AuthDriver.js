@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ToastAndroid } from "react-native";
 import { Drawer, Avatar, Portal, Modal, Provider, Button, Switch } from 'react-native-paper';
 import AsyncStorage from '@react-native-community/async-storage';
 import Drivers from "./drivers";
@@ -10,14 +10,14 @@ class AuthDriver extends Component {
         super(props);
         this.state = { 
             modalVisible: false,
-            isLoading: true,
+            isLoading: false,
             code: "",
          };
     }
 
     getData = async () => {
         try {
-          const rawCode = await AsyncStorage.getItem('code')
+          const rawCode = await AsyncStorage.getItem('driverDet')
           let code = JSON.parse(rawCode)
           // console.log(code);
           if(code === null) {
@@ -35,30 +35,54 @@ class AuthDriver extends Component {
         this.getData()
     }
 
+    _toast = () => {
+        ToastAndroid.showWithGravity(
+          `Driver code cannot be empty`,
+          ToastAndroid.LONG,
+          ToastAndroid.BOTTOM,
+        );
+      };
+
     showModal = () => {
         this.setState({ modalVisible: true })
     }
 
     cancel = () => {
-        this.setState({ modalVisible: false })
-        this.props.navigation.navigate(HomeScreen)
+        this.setState({ modalVisible: false });
+        this.props.navigation.navigate(HomeScreen);
     }
 
-    send = () => {
-        if (this.state.code) {
-            this.setState({ modalVisible: false })
-            this.textInput.clear();
-            this.props.navigation.navigate(Drivers);
+    storeData = async (details) => {
+        let det = JSON.stringify(details);
+        await AsyncStorage.setItem("driverDet", det);
+        this.props.navigation.navigate(Drivers)
+        this.setState({isLoading: false});
+    }
+
+    send = async () => {
+        let driverId = this.state.code;
+        if (this.state.code !== "") {
+            this.setState({isLoading: true});
+            let driverDetails = await fetch("http://192.168.43.233:9000/api/drivers/"+driverId);
+            let driverDet = await driverDetails.json();
+            let details = driverDet.data
+            if (driverDet.success === 1) {
+                this.storeData(details);
+            } else {
+                alert(driverDet.message);
+                this.setState({isLoading: false});
+            }
         } else {
-            alert("Please enter a correct code to continue");
-            this.textInput.clear();
+            this._toast();
         }
     }
 
-    render() {
-        return (
-            <Provider>
+    modalView = () => {
+        let animating = this.state.isLoading;
+        return(
             <Portal>
+                {
+                    this.state.isLoading === false ? 
                     <Modal contentContainerStyle={{alignItems: "center"}} visible={this.state.modalVisible} dismissable={false}>
                         <View style={styles.container}>
                             <Text style={styles.note}>Please Enter your driver's code to continue</Text>
@@ -84,8 +108,26 @@ class AuthDriver extends Component {
                             <Text style={{ color: "#fff" }}>cancel</Text>
                         </TouchableOpacity>
                     </Modal>
-                </Portal>
-                </Provider>
+                :
+                    <Modal contentContainerStyle={{alignItems: "center"}} visible={this.state.modalVisible} dismissable={false}>
+                        <View style={styles.container}>
+                            <ActivityIndicator
+                                animating={animating}
+                                size="large"
+                                color="#fff"
+                            />
+                        </View>
+                    </Modal>
+                }
+            </Portal>
+        )
+    }
+
+    render() {
+        return (
+            <Provider>
+                {this.modalView()}
+            </Provider>
         );
     }
 }

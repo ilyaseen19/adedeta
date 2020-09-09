@@ -1,23 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
+import AsyncStorage from '@react-native-community/async-storage';
 import { Drawer, Avatar, Portal, Modal } from 'react-native-paper';
 import Settings from "./settings";
 import AuthDriver from "./AuthDriver";
 
-const userData = "";
-
 export function DrawerFile(props) {
 
-    // const [userData, setUser] = useState;
+    const [userData, setUser] = useState([]);
+    const [userImage, setImage] = useState('');
+
+    useEffect(() => {
+        getData();
+    }, []);
+
+    const getData = async () => {
+        try {
+            const userData = await AsyncStorage.getItem('data')
+            const image = await AsyncStorage.getItem('image')
+            let data = JSON.parse(userData)
+            let uImage = JSON.parse(image)
+            // console.log(data);
+            setUser(data);
+            setImage(uImage);
+        } catch (e) {
+            // error reading value
+            console.log(e);
+        }
+    }
 
     const renderImage = () => {
         return (
             <View
-                style={{ alignItems: "center"}}
+                style={{ alignItems: "center" }}
             >
                 <View>
-                    {userData === "" ?
+                    {userImage === "" ?
                         <Avatar.Image
                             source={require("../images/user.png")}
                             size={120}
@@ -25,14 +44,14 @@ export function DrawerFile(props) {
                         />
                         :
                         <Avatar.Image
-                            source={require("../images/user.png")}
+                            source={userImage}
                             size={120}
                             style={{ backgroundColor: "#ccc" }}
                         />}
                 </View>
-                <View  style={{ alignItems: "center"}}>
-                    <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold", marginTop: 20 }}>user Name</Text>
-                    <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold", marginTop: 15 }}>contact</Text>
+                <View style={{ alignItems: "center" }}>
+                    <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold", marginTop: 20 }}>{userData.userName}</Text>
+                    <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold", marginTop: 15 }}>{userData.phoneNumber}</Text>
                 </View>
             </View>
         )
@@ -48,14 +67,14 @@ export function DrawerFile(props) {
                         <DrawerItem
                             label="Drive"
                             labelStyle={{ color: "#fff", fontSize: 15 }}
-                            icon={({color, size}) => (
-                                <Image source={require("../images/driver.png")} style={{width: 40, height: 40}} />
+                            icon={({ color, size }) => (
+                                <Image source={require("../images/driver.png")} style={{ width: 40, height: 40 }} />
                             )}
-                            onPress={()=>{props.navigation.navigate(AuthDriver)}}
+                            onPress={() => { props.navigation.navigate(AuthDriver) }}
                         />
                         <DrawerItem
-                            icon={({color, size}) => (
-                                <Image source={require("../images/aiPay.png")} style={{width: 40, height: 40}} />
+                            icon={({ color, size }) => (
+                                <Image source={require("../images/aiPay.png")} style={{ width: 40, height: 40 }} />
                             )}
                             label="AiPay"
                             labelStyle={{ color: "#fff", fontSize: 18 }}
@@ -65,14 +84,14 @@ export function DrawerFile(props) {
             </DrawerContentScrollView>
             <Drawer.Section style={styles.bottomDrawerSection}>
                 <DrawerItem
-                    icon={({color, size}) => (
-                        <Image source={require("../images/settings.png")} style={{width: 40, height: 40}} />
+                    icon={({ color, size }) => (
+                        <Image source={require("../images/settings.png")} style={{ width: 40, height: 40 }} />
                     )}
                     label="Settigs"
                     labelStyle={{ color: "#fff", fontSize: 20 }}
-                    onPress={()=>{props.navigation.navigate(Settings)}}
+                    onPress={() => { props.navigation.navigate(Settings) }}
                 />
-                <Text style={{alignSelf: "center", color: "gray"}}>Powered by AiChat</Text>
+                <Text style={{ alignSelf: "center", color: "gray" }}>Powered by AiChat</Text>
             </Drawer.Section>
         </View>
     )
