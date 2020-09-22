@@ -7,12 +7,13 @@ import {
     TouchableOpacity,
     TextInput,
     ScrollView,
-    ActivityIndicator
+    ActivityIndicator,
 } from 'react-native';
 import { Drawer, Switch } from 'react-native-paper';
 import AsyncStorage from '@react-native-community/async-storage';
 import ImagePicker from 'react-native-image-picker';
 import styles from "../styles/settingsStyle";
+import HomeScreen from "./homeScreen";
 
 function Settings({ navigation }) {
 
@@ -116,7 +117,7 @@ function Settings({ navigation }) {
         let userId = userData._id;
         if (validation()) {
             setAnimating(true);
-            fetch("http://192.168.43.233:8500/api/users/" + userId, {
+            fetch("https://adedeta.herokuapp.com/api/users/" + userId, {
                 method: "PATCH",
                 headers: {
                     Accept: 'application/json',
@@ -133,7 +134,6 @@ function Settings({ navigation }) {
                     let data = {_id: userData._id, userName: name, phoneNumber: phone};
                     storeData(data);
                 } else {
-                    console.log(res.message);
                     setAnimating(false);
                 }
             })
@@ -151,6 +151,9 @@ function Settings({ navigation }) {
                             <TouchableOpacity onPress={() => handleImage()}>
                                 <Image source={require("../images/edit.png")} style={styles.edit} />
                             </TouchableOpacity>
+                            <TouchableOpacity style={{ marginBottom: "3%" }} onPress={() =>navigation.navigate(HomeScreen)}>
+                                <Image source={require("../icons/back.png")} style={{ height: 30, width: 30, marginRight: "3%" }} />
+                            </TouchableOpacity>
                         </ImageBackground>
                         :
                         <ImageBackground
@@ -158,6 +161,9 @@ function Settings({ navigation }) {
                             source={userImage} style={styles.container}>
                             <TouchableOpacity onPress={() => handleImage()}>
                                 <Image source={require("../images/edit.png")} style={styles.edit} />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={{ marginTop: "3%" }} onPress={() =>navigation.navigate(HomeScreen)}>
+                                <Image source={require("../icons/back.png")} style={{ height: 30, width: 30, marginRight: "3%" }} />
                             </TouchableOpacity>
                         </ImageBackground>
                 }

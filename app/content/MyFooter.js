@@ -8,7 +8,7 @@ export default class MyFooter extends React.Component {
     const date = moment().year();
     return (
       <View style={styles.footerContainer}>
-        <Text>Powered by AiChat</Text>
+        <Text>Powered by SenseCode</Text>
         <Text>Copyright {date} </Text>
       </View>
     );

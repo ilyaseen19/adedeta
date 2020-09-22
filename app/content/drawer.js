@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-community/async-storage';
 import { Drawer, Avatar, Portal, Modal } from 'react-native-paper';
 import Settings from "./settings";
 import AuthDriver from "./AuthDriver";
+import Prices from "./prices";
 
 export function DrawerFile(props) {
 
@@ -74,6 +75,14 @@ export function DrawerFile(props) {
                         />
                         <DrawerItem
                             icon={({ color, size }) => (
+                                <Image source={require("../images/prices.png")} style={{ width: 40, height: 40 }} />
+                            )}
+                            label="Prices"
+                            labelStyle={{ color: "#fff", fontSize: 18 }}
+                            onPress={() => { props.navigation.navigate(Prices) }}
+                        />
+                        <DrawerItem
+                            icon={({ color, size }) => (
                                 <Image source={require("../images/aiPay.png")} style={{ width: 40, height: 40 }} />
                             )}
                             label="AiPay"
@@ -91,7 +100,7 @@ export function DrawerFile(props) {
                     labelStyle={{ color: "#fff", fontSize: 20 }}
                     onPress={() => { props.navigation.navigate(Settings) }}
                 />
-                <Text style={{ alignSelf: "center", color: "gray" }}>Powered by AiChat</Text>
+                <Text style={{ alignSelf: "center", color: "gray" }}>Powered by SenseCode</Text>
             </Drawer.Section>
         </View>
     )

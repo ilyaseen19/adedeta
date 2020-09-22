@@ -106,7 +106,7 @@ export default class Signup extends Component {
     let phone = this.state.mobNo;
     if (this.validation()){
       this.setModalVisible();
-      fetch("http://192.168.43.233:8500/api/users/register", {
+      fetch("https://adedeta.herokuapp.com/api/users/register", {
         method: "POST",
         headers: {
           Accept: 'application/json',

@@ -10,6 +10,7 @@ import {DrawerFile} from "../content/drawer";
 import Settings from "../content/settings";
 import AuthDriver from "../content/AuthDriver";
 import Drivers from "../content/drivers";
+import Prices from "../content/prices";
 
 const Stack = createStackNavigator();
 const DrawerScreen = createDrawerNavigator();
@@ -20,13 +21,14 @@ function DrawerRoutes() {
       drawerContent={props => <DrawerFile {...props} />}
       drawerStyle={{
         backgroundColor: 'rgba(0, 54, 58, 0.8)',
-        height: '70%',
-        width: "60%",
-        borderBottomRightRadius: 20,
+        // height: '70%',
+        width: "70%",
+        // borderBottomRightRadius: 20,
       }}>
       <DrawerScreen.Screen name="HomeScreen" component={HomeScreen} />
       <DrawerScreen.Screen name="Settings" component={Settings} />
       <DrawerScreen.Screen name="AuthDriver" component={AuthDriver} />
+      <DrawerScreen.Screen name="Prices" component={Prices} />
 
     </DrawerScreen.Navigator>
   );

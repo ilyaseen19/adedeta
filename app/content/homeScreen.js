@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, ToastAndroid, Text, Image, TouchableOpacity, FlatList, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, BackHandler, Text, Image, TouchableOpacity, FlatList, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Drawer, Avatar, Portal, Modal, Button } from 'react-native-paper';
 import styles from '../styles/homeStyles';
 import MapView, { Marker, PROVIDER_GOOGLE, Callout } from 'react-native-maps';
@@ -9,6 +9,7 @@ import Geolocation from '@react-native-community/geolocation';
 import RNGooglePlaces from 'react-native-google-places';
 import MapViewDirections from 'react-native-maps-directions';
 import getDistance from 'geolib/es/getDistance';
+import { log } from 'react-native-reanimated';
 const AdeIcon = require("../adedetas/adedeta");
 const ApiKey = require("../config/apiKey/apiKey");
 
@@ -18,6 +19,8 @@ type State = {
     addressQuery: string,
     predictions: Array<any>
 }
+
+const lock = [];
 
 class HomeScreen extends Component<Props, State> {
     socket: Object;
@@ -48,32 +51,86 @@ class HomeScreen extends Component<Props, State> {
             animating: false,
             drDetails: null,
             fiinalPrice: null,
+            isSearchBarActive: true,
         }
+        this.handleBackButtonClick = this.handleBackButtonClick.bind(this);
     }
 
     componentDidMount() {
         this.getCurrentLocation();
         this.destinationRenderer();
-        this.socket = SocketIOClient('http://192.168.43.233:8500');
+        this.socket = SocketIOClient('https://adedeta.herokuapp.com');
         this.getData();
         this.socket.on("message", driverLocation => {
-            // console.log(driverLocation);
-            this.setState({ markers: driverLocation });
+            //Find index of specific object using findIndex method.
+            objIndex = lock.findIndex((obj => obj.driverId == driverLocation.driverId));
+            let contains = () => {
+                var i = lock.length;
+                while (i--) {
+                    if (lock[i] === driverLocation) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+            if (contains) {
+                if (objIndex === -1) {
+                    lock.push(driverLocation);
+                    this.setState({ markers: lock });
+                } else {
+                    //Update object's name property.
+                    lock[objIndex] = driverLocation;
+                    this.setState({ markers: lock });
+                }
+            }
         });
         this.socket.on("request", dRequest => {
-            this.setState({drDetails: dRequest });
+            if (dRequest.status !== "declined") {
+                this.setState({ drDetails: dRequest });
+            } else {
+                this.setState({
+                    animating: false,
+                    showInput: false,
+                    showConfirm: false,
+                    drDetails: null
+                });
+                alert("Driver declined your request, Please choose another driver");
+            }
         });
         this.socket.on("price", price => {
-            console.log(price);
-            this.setState({fiinalPrice: price });
+            this.setState({ fiinalPrice: price });
         });
+        BackHandler.addEventListener('hardwareBackPress', this.handleBackButtonClick);
     };
 
     componentWillUnmount() {
         this.socket.emit('disconnect', {
             senderId: this.state.userData._id
         });
+        BackHandler.removeEventListener('hardwareBackPress', this.handleBackButtonClick);
     }
+
+    handleBackButtonClick() {
+        // Alert.alert(
+        //     "Exit",
+        //     "Are you sure you want to exit?",
+        //     [
+        //         {
+        //             text: "Cancel",
+        //             onPress: () => {
+        //                 console.log("Cancel Pressed");
+        //             },
+        //             style: "cancel"
+        //         },
+        //         { text: "Exit", onPress: () => this.handleLogout() }
+        //     ],
+        // )
+        BackHandler.exitApp();
+    };
+
+    // handleLogout() {
+    //     BackHandler.exitApp();
+    // };
 
     getData = async () => {
         try {
@@ -160,7 +217,11 @@ class HomeScreen extends Component<Props, State> {
     }
 
     onSelectDriver = (item) => {
-        this.setState({ driverId: item.driverId, showConfirm: true });
+        if (item.currentStatus === "busy") {
+            alert("this driver is currently busy, please choose another driver")
+        } else {
+            this.setState({ driverId: item.driverId, showConfirm: true });
+        }
     }
 
     calcPrice = () => {
@@ -250,7 +311,7 @@ class HomeScreen extends Component<Props, State> {
             priceRange = "GH₵ 66 - 68";
         } else if (41 < distance && distance <= 42) {
             priceRange = "GH₵ 68 - 70";
-        } 
+        }
         return priceRange;
     }
 
@@ -321,44 +382,89 @@ class HomeScreen extends Component<Props, State> {
             latitude: 6.68848,
             longitude: -1.62443,
         }
-        this.setState({ animating: false, showInput: false, destination: desti })
+        this.setState({
+            animating: false,
+            showInput: false,
+            destination: desti,
+            drDetails: null,
+            fiinalPrice: null,
+        })
     }
 
     showInput = () => {
         this.setState({ showInput: true });
     }
 
-    keyExtracted = item => item.index;
+    keyExtracted = item => item._id;
 
     renderDriver = ({ item }) => {
+        let dlock = item.initialRegion;
+        let plock = this.state.initialRegion;
+        let calcDis = getDistance(
+            { latitude: plock.latitude, longitude: plock.longitude },
+            { latitude: dlock.latitude, longitude: dlock.longitude });
+        const fiDist = calcDis / 1000;
         return (
             <View>
-                <TouchableOpacity
-                    onPress={() => this.onSelectDriver(item)}>
-                    <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
-                        <Text style={{ fontSize: 15 }}>Driver Name:</Text>
-                        <Text style={{ fontSize: 15, fontWeight: "bold" }}>{item.driverName}</Text>
+                { item.currentStatus === "free" ?
+                    <View>
+                        <TouchableOpacity
+                            onPress={() => this.onSelectDriver(item)}>
+                            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
+                                <Text style={{ fontSize: 15 }}>Driver Name:</Text>
+                                <Text style={{ fontSize: 15, fontWeight: "bold" }}>{item.driverName}</Text>
+                            </View>
+                            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
+                                <Text style={{ fontSize: 15 }}>Distance from you:</Text>
+                                <Text style={{ fontSize: 15, fontWeight: "bold" }}>{fiDist}km</Text>
+                            </View>
+                            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
+                                <Text style={{ fontSize: 15 }}>Number Plate:</Text>
+                                <Text style={{ fontSize: 15, fontWeight: "bold" }}>{item.numberPlate}</Text>
+                            </View>
+                            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
+                                <Text style={{ fontSize: 15 }}>Driver status:</Text>
+                                <Text style={{ fontSize: 15, fontWeight: "bold", color: "black" }}>{item.currentStatus}</Text>
+                            </View>
+                        </TouchableOpacity>
+                        <View style={{
+                            height: StyleSheet.hairlineWidth,
+                            backgroundColor: 'black',
+                            width: '92%',
+                            marginHorizontal: 16,
+                            // opacity: 0.6
+                        }} />
                     </View>
-                    <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
-                        <Text style={{ fontSize: 15 }}>Contact:</Text>
-                        <Text style={{ fontSize: 15, fontWeight: "bold" }}>{item.contact}</Text>
+                    :
+                    <View>
+                        <TouchableOpacity
+                            onPress={() => this.onSelectDriver(item)}>
+                            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
+                                <Text style={{ fontSize: 15 }}>Driver Name:</Text>
+                                <Text style={{ fontSize: 15, fontWeight: "bold" }}>{item.driverName}</Text>
+                            </View>
+                            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
+                                <Text style={{ fontSize: 15 }}>Distance from you:</Text>
+                                <Text style={{ fontSize: 15, fontWeight: "bold" }}>{fiDist}km</Text>
+                            </View>
+                            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
+                                <Text style={{ fontSize: 15 }}>Number Plate:</Text>
+                                <Text style={{ fontSize: 15, fontWeight: "bold" }}>{item.numberPlate}</Text>
+                            </View>
+                            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
+                                <Text style={{ fontSize: 15 }}>Driver status:</Text>
+                                <Text style={{ fontSize: 15, fontWeight: "bold", color: "red" }}>{item.currentStatus}</Text>
+                            </View>
+                        </TouchableOpacity>
+                        <View style={{
+                            height: StyleSheet.hairlineWidth,
+                            backgroundColor: 'black',
+                            width: '92%',
+                            marginHorizontal: 16,
+                            // opacity: 0.6
+                        }} />
                     </View>
-                    <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
-                        <Text style={{ fontSize: 15 }}>Number Plate:</Text>
-                        <Text style={{ fontSize: 15, fontWeight: "bold" }}>{item.numberPlate}</Text>
-                    </View>
-                    <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 10, marginBottom: 5 }}>
-                        <Text style={{ fontSize: 15 }}>Driver status:</Text>
-                        <Text style={{ fontSize: 15, fontWeight: "bold" }}>{item.currentStatus}</Text>
-                    </View>
-                </TouchableOpacity>
-                <View style={{
-                    height: StyleSheet.hairlineWidth,
-                    backgroundColor: 'black',
-                    width: '92%',
-                    marginHorizontal: 16,
-                    // opacity: 0.6
-                }} />
+                }
             </View>
         );
     }
@@ -417,25 +523,21 @@ class HomeScreen extends Component<Props, State> {
                                                 :
                                                 <View style={{ alignItems: "center" }}>
                                                     <View>
-                                                        <Text style={{ fontSize: 16, alignSelf: "center" }}>Hi am </Text>
-                                                        <Text style={{ fontSize: 18, fontWeight: "bold", alignSelf: "center" }}>{this.state.drDetails.driverName}, </Text>
-                                                        <Text style={{ fontSize: 16, alignSelf: "center" }}>am on my way to pick you up. </Text>
-                                                    </View>
-                                                    <View>
-                                                        <Text style={{ fontSize: 16, alignSelf: "center" }}>My contact is </Text>
-                                                        <Text style={{ fontSize: 18, fontWeight: "bold", alignSelf: "center" }}>{this.state.drDetails.contact}, </Text>
-                                                    </View>
-                                                    <View>
                                                         {this.state.fiinalPrice === null ?
                                                             <View>
+                                                                <Text style={{ fontSize: 16, alignSelf: "center" }}>Hi am </Text>
+                                                                <Text style={{ fontSize: 18, fontWeight: "bold", alignSelf: "center" }}>{this.state.drDetails.driverName} </Text>
+                                                                <Text style={{ fontSize: 16, alignSelf: "center" }}>am on my way to pick you up. </Text>
+                                                                <Text style={{ fontSize: 16, alignSelf: "center" }}>My contact is </Text>
+                                                                <Text style={{ fontSize: 18, fontWeight: "bold", alignSelf: "center" }}>{this.state.drDetails.contact} </Text>
                                                                 <Text style={{ color: "#e0e0e0", borderBottomWidth: 1, borderColor: "black" }}>final price will be shown once trip ends!!!</Text>
                                                             </View>
                                                             :
-                                                            <View>
+                                                            <View style={{ width: "100%" }}>
                                                                 <Text style={{ fontSize: 16, alignSelf: "center" }}>final price is: </Text>
-                                                                <Text style={{ fontSize: 18, fontWeight: "bold", alignSelf: "center" }}>{this.state.fiinalPrice.fiinalPrice}</Text>
+                                                                <Text style={{ fontSize: 18, fontWeight: "bold", alignSelf: "center" }}>{this.state.fiinalPrice.finalPrice}</Text>
                                                                 <Button mode="contained" color="rgba(0, 54, 58, 0.8)"
-                                                                    style={{ width: "65%", marginRight: 10, marginVertical: 13 }}
+                                                                    style={{ width: "100%", marginRight: 10, marginVertical: 13 }}
                                                                     onPress={() => this.completed()}>
                                                                     Ride Completed
                                                                 </Button>

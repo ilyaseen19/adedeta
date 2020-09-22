@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Component } from 'react';
-import { View, Text, TextInput, Image, TouchableOpacity, FlatList, StyleSheet } from "react-native";
+import { View, Text, TextInput, Image, TouchableOpacity, Alert, BackHandler } from "react-native";
 import AsyncStorage from '@react-native-community/async-storage';
 import { Drawer, Avatar, Portal, Modal, Provider, Button, Switch } from 'react-native-paper';
 import MapView, { Marker, PROVIDER_GOOGLE, Callout } from 'react-native-maps';
@@ -8,6 +8,7 @@ import MapViewDirections from 'react-native-maps-directions';
 import Geolocation from '@react-native-community/geolocation';
 const ApiKey = require("../config/apiKey/apiKey");
 import styles from "../styles/driverStyles";
+import HomeScreen from "./homeScreen";
 
 
 class Drivers extends Component {
@@ -29,26 +30,52 @@ class Drivers extends Component {
             dData: [],
             start: false,
             startTrip: false,
-            finalPrice: null
+            finalPrice: null,
+            isSearchBarActive: true,
         }
+        this.handleBackButtonClick = this.handleBackButtonClick.bind(this);
     }
 
     componentDidMount() {
         this.geocoordinates();
         this.active();
-        this.socket = SocketIOClient('http://192.168.43.233:8500');
+        this.socket = SocketIOClient('https://adedeta.herokuapp.com');
         this.getData();
         this.socket.on("driveRequest", driverRequest => {
             // console.log(driverRequest);
             this.setState({ request: driverRequest });
         });
+        BackHandler.addEventListener('hardwareBackPress', this.handleBackButtonClick);
     }
 
     componentWillUnmount() {
         this.socket.emit('disconnect', {
             senderId: this.state.dData._id
         });
+        BackHandler.removeEventListener('hardwareBackPress', this.handleBackButtonClick);
     }
+
+    handleBackButtonClick() {
+        Alert.alert(
+            "Exit",
+            "Are you sure you want to exit?",
+            [
+                {
+                    text: "Cancel",
+                    onPress: () => {
+                        console.log("Cancel Pressed");
+                    },
+                    style: "cancel"
+                },
+                { text: "Exit", onPress: () => this.handleLogout() }
+            ],
+            { cancelable: false }
+        )
+    };
+
+    handleLogout() {
+        BackHandler.exitApp();
+    };
 
     getData = async () => {
         try {
@@ -82,13 +109,25 @@ class Drivers extends Component {
             this.setState({ initialRegion: initialRegion });
         },
             (error) => alert("location access failed"),
-            { enableHighAccuracy: true, timeout: 50000, maximumAge: 3000 });
+            { enableHighAccuracy: true, timeout: 50000, maximumAge: 3000 }
+        );
+            Geolocation.watchPosition((position) => {
+                    var lati = parseFloat(position.coords.latitude)
+                    var longi = parseFloat(position.coords.longitude)
+                    var changed = {
+                        latitude: lati,
+                        longitude: longi,
+                        latitudeDelta: 0.0922,
+                        longitudeDelta: 0.0421
+                }
+                    this.setState({ initialRegion: changed });
+            })
     }
 
     sendDriverLocation = () => {
         setInterval(() => {
             if (this.state.driverFree === false) {
-                this.socket.emit('driverLocation', {
+                    this.socket.emit('driverLocation', {
                     driverId: this.state.dData._id,
                     initialRegion: this.state.initialRegion,
                     driverName: this.state.dData.firstName + " " + this.state.dData.lastName,
@@ -98,7 +137,7 @@ class Drivers extends Component {
                     currentStatus: "free",
                 })
             } else {
-                this.socket.emit('driverLocation', {
+                    this.socket.emit('driverLocation', {
                     driverId: this.state.dData._id,
                     initialRegion: this.state.initialRegion,
                     driverName: this.state.dData.firstName + " " + this.state.dData.lastName,
@@ -108,7 +147,7 @@ class Drivers extends Component {
                     currentStatus: "busy",
                 })
             }
-        }, 5000);
+        }, 10000);
     }
 
     active = () => {
@@ -345,11 +384,6 @@ class Drivers extends Component {
                         />
                     </MapView>
                 }
-                <Callout>
-                    <TouchableOpacity style={{ marginTop: "10%", marginLeft: "10%" }} onPress={() => this.props.navigation.toggleDrawer()}>
-                        <Image source={require("../images/menu.png")} style={{ height: 40, width: 40 }} />
-                    </TouchableOpacity>
-                </Callout>
                 <View style={{ backgroundColor: '#fff', }}>
                     {this.state.request === null ?
                         <View style={styles.tabContainer}>
@@ -427,19 +461,19 @@ class Drivers extends Component {
                                 { this.state.startTrip === true ?
                                     <View style={{alignItems: "center"}}>
                                         {   this.state.finalPrice === null ?
-                                            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 18, marginBottom: 5, paddingTop: 12 }}>
+                                            <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 18, marginBottom: 5, paddingTop: 12, paddingBottom: 5 }}>
                                             <Text style={{ fontSize: 15 }}>Going To:</Text>
                                             <Text style={{ fontSize: 15, fontWeight: "bold" }}>{this.state.request.placeName}</Text>
                                             </View>
                                         :
                                             <View style={{ flexDirection: "row", width: "100%", justifyContent: "space-between", paddingHorizontal: 18, marginBottom: 5, paddingTop: 12 }}>
-                                            <Text style={{ fontSize: 15 }}>Final fare:</Text>
-                                            <Text style={{ fontSize: 15, fontWeight: "bold" }}>{this.state.finalPrice}</Text>
+                                            <Text style={{ fontSize: 15, alignSelf: "center" }}>Final fare:</Text>
+                                            <Text style={{ fontSize: 15, fontWeight: "bold", alignSelf: "center"}}>{this.state.finalPrice}</Text>
+                                            <Button mode="contained" icon="close" color="rgba(0, 54, 58, 0.8)" style={{marginVertical: 10}} onPress={() => this.close()}>
+                                                close
+                                            </Button>
                                             </View>
                                         }
-                                        <Button mode="contained" icon="close" color="rgba(0, 54, 58, 0.8)" style={{marginVertical: 10}} onPress={() => this.close()}>
-                                            close
-                                        </Button>
                                     </View>
                                 :
                                     <View></View>
