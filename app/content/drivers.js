@@ -201,6 +201,36 @@ class Drivers extends Component {
             driverId: this.state.dData._id,
         })
         this.setState({finalPrice: price});
+        this.sendTrip();
+    };
+
+    sendTrip = () =>{
+        let driverId = this.state.dData._id
+        let driverPhone = this.state.dData.phone
+        let price = this.state.request.priceRange
+        let distance = this.state.request.distance
+        let pName = this.state.request.senderName
+        let dName = this.state.dData.firstName+" "+ this.state.dData.lastName
+        let pPhone = this.state.request.contact
+        let destination = this.state.request.placeName
+        fetch("http://192.168.43.233:9000/api/sales/addSale/", {
+            method: "POST",
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                driverId: driverId,
+                phone: driverPhone,
+                price: price,
+                date: Date.now,
+                distance: distance,
+                passengerName: pName,
+                driverName: dName,
+                passengerPhone: pPhone,
+                destination: destination,
+            })
+          })
     }
 
     close = () => {
