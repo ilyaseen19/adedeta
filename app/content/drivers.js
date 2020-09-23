@@ -213,7 +213,7 @@ class Drivers extends Component {
         let dName = this.state.dData.firstName+" "+ this.state.dData.lastName
         let pPhone = this.state.request.contact
         let destination = this.state.request.placeName
-        fetch("http://192.168.43.233:9000/api/sales/addSale/", {
+        fetch("https://ade-web.herokuapp.com/api/sales/addSale/", {
             method: "POST",
             headers: {
               Accept: 'application/json',

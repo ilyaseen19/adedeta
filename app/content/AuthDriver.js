@@ -63,7 +63,7 @@ class AuthDriver extends Component {
         let driverId = this.state.code;
         if (this.state.code !== "") {
             this.setState({isLoading: true});
-            let driverDetails = await fetch("http://192.168.43.233:9000/api/drivers/"+driverId);
+            let driverDetails = await fetch("https://ade-web.herokuapp.com/api/drivers/"+driverId);
             let driverDet = await driverDetails.json();
             let details = driverDet.data
             if (driverDet.success === 1) {
